@@ -12,10 +12,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.servlet.HandlerInterceptor;
+/*vulnerabilidad - deserilizacion insegura */
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AutoLoginInterceptor implements HandlerInterceptor {
 
     private final UserService userService;
+    /* vulnerabilidad - deserilizacion insegura */
+    private final String secretKey = System.getenv("JWT_SECRET_KEY");
+    private static final Logger logger = LoggerFactory.getLogger(AutoLoginInterceptor.class);
+
+    private Claims validateJwt(String jwt) throws JwtException {
+        return Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(jwt)
+                .getBody();
+    }
 
     public AutoLoginInterceptor(UserService userService) {
         this.userService = userService;
@@ -31,19 +47,29 @@ public class AutoLoginInterceptor implements HandlerInterceptor {
         }
         for (Cookie c : request.getCookies()) {
             if (Constants.PERSISTENT_USER_COOKIE.equals(c.getName())) {
-                String cookieValue = c.getValue();
-                if (cookieValue == null) {
+                String jwt = c.getValue();
+                /* vulnerabilidad - deserilizacion insegura */
+                if (jwt == null) {
                     continue;
                 }
-                Base64.Decoder decoder = Base64.getDecoder();
-                XMLDecoder xmlDecoder = new XMLDecoder(new ByteArrayInputStream(decoder.decode(cookieValue)));
-                UserInfo userInfo = (UserInfo) xmlDecoder.readObject();
-                User user = userService.findByEmail(userInfo.getEmail());
-                if (user != null && user.getPassword().equals(userInfo.getPassword())) {
-                    session.setAttribute(Constants.USER_SESSION, user);
+                try {
+                    Claims claims = validateJwt(jwt);
+                    String email = claims.get("email", String.class);
+                    if (!"UserInfo".equals(claims.getSubject())) {
+                        throw new SecurityException("Invalid object type");
+                    }
+                    User user = userService.findByEmail(email);
+                    if (user != null) {
+                        session.setAttribute(Constants.USER_SESSION, user);
+                    }
+                } catch (JwtException e) {
+                    logger.warn("Invalid JWT token");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+                    return false;
                 }
             }
         }
         return true;
     }
+
 }
