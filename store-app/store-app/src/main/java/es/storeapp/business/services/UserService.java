@@ -35,7 +35,7 @@ public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     // COMENTADA PARA NO USAR UN SALT ESTATICO
-    private static final String SALT = "$2a$10$MN0gK0ldpCgN9jx6r0VYQO";
+    //private static final String SALT = "$2a$10$MN0gK0ldpCgN9jx6r0VYQO";
 
     @Autowired
     ConfigurationParameters configurationParameters;
