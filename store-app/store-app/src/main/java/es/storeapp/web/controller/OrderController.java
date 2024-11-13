@@ -65,7 +65,15 @@ public class OrderController {
             Model model,
             Locale locale) {
         try {
-            model.addAttribute(Constants.ORDER, orderService.findById(id));
+            /* Vulnerabilidad -Control de acceso: Escalado horizontal */
+            List<Order> listaOrdenes = orderService.findByUserById(user.getUserId());
+            Order orden = orderService.findById(id) != null ? orderService.findById(id) : null;
+            if (orden != null) {
+                if (listaOrdenes.contains(orden)) {
+                    model.addAttribute(Constants.ORDER, orden);
+                }
+            }
+
         } catch (InstanceNotFoundException ex) {
             return errorHandlingUtils.handleInstanceNotFoundException(ex, model, locale);
         }
@@ -112,6 +120,7 @@ public class OrderController {
         }
         model.addAttribute(Constants.ORDER_FORM, orderForm);
         model.addAttribute(Constants.PRODUCTS, products);
+        /* vulnerabilidad - Logs insuficientes */
         logger.info("El order ha sido completado");
         return Constants.ORDER_COMPLETE_PAGE;
     }
@@ -170,6 +179,7 @@ public class OrderController {
                         paymentForm.getExpirationMonth(), paymentForm.getExpirationYear(), paymentForm.getSave());
                 if (paymentForm.getSave() != null && paymentForm.getSave()) {
                     session.setAttribute(Constants.USER_SESSION, user);
+                    /* vulnerabilidad - Logs insuficientes */
                     logger.info("El order ha sido pagado");
                 }
             }
