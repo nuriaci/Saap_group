@@ -63,6 +63,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User login(String email, String clearPassword) throws AuthenticationException {
+        /* vulnerabilidad - datos de entrada */
+        if (!isValidEmail(email)) {
+            throw exceptionGenerationUtils.toAuthenticationException(Constants.AUTH_INVALID_EMAIL_FORMAT_MESSAGE,
+                    email);
+        }
+
         if (!userRepository.existsUser(email)) {
             throw exceptionGenerationUtils.toAuthenticationException(Constants.AUTH_INVALID_USER_MESSAGE, email);
         }
@@ -267,6 +273,12 @@ public class UserService {
             }
         }
         return null;
+    }
+
+    /* vulnerabilidad - datos de entrada */
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return email != null && email.matches(emailRegex);
     }
 
 }

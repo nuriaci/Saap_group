@@ -33,6 +33,7 @@ public class UserRepository extends AbstractRepository<User> {
         return ((Long) query.getSingleResult() > 0);
     }
 
+    /* vulnerabilidad - SQL-i */
     public User findByEmailAndPassword(String email, String password) {
         try {
             // PreparedStatement preparedStatement =
