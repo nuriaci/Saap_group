@@ -159,7 +159,8 @@ public class UserController {
             return errorHandlingUtils.handleAuthenticationException(ex, loginForm.getEmail(),
                     Constants.LOGIN_PAGE, model, locale);
         }
-        if (next != null && next.trim().length() > 0) {
+        /* vulnerabilidad - Control de acceso: Redirecciones */
+        if (next != null && next.trim().length() > 0 && next.startsWith("http://localhost:8888/")) {
             return Constants.SEND_REDIRECT + next;
         }
         return Constants.SEND_REDIRECT + Constants.ROOT_ENDPOINT;

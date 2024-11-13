@@ -7,7 +7,7 @@
     <artifactId>store-app</artifactId>
     <version>1.0.0</version>
     <name>Store Application</name>
-
+    <!-- vulnerabilidad libreria de terceros -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
