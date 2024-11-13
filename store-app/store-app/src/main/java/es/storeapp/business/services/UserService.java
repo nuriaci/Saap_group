@@ -35,7 +35,7 @@ public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     // COMENTADA PARA NO USAR UN SALT ESTATICO
-    //private static final String SALT = "$2a$10$MN0gK0ldpCgN9jx6r0VYQO";
+    // private static final String SALT = "$2a$10$MN0gK0ldpCgN9jx6r0VYQO";
 
     @Autowired
     ConfigurationParameters configurationParameters;
@@ -67,11 +67,12 @@ public class UserService {
             throw exceptionGenerationUtils.toAuthenticationException(Constants.AUTH_INVALID_USER_MESSAGE, email);
         }
 
-        //User user = userRepository.findByEmailAndPassword(email, BCrypt.hashpw(clearPassword, SALT));
-        
-        //PARA EVITAR USAR SALT ESTATICO
+        // User user = userRepository.findByEmailAndPassword(email,
+        // BCrypt.hashpw(clearPassword, SALT));
+
+        // PARA EVITAR USAR SALT ESTATICO
         User user = userRepository.findByEmail(email);
-        if (user == null /*Para evitar el salt*/ || !BCrypt.checkpw(clearPassword, user.getPassword())) {
+        if (user == null /* Para evitar el salt */ || !BCrypt.checkpw(clearPassword, user.getPassword())) {
             throw exceptionGenerationUtils.toAuthenticationException(Constants.AUTH_INVALID_PASSWORD_MESSAGE, email);
         }
         return user;
@@ -105,14 +106,14 @@ public class UserService {
             htmlEmail.addTo(email, user.getName());
             htmlEmail.setFrom(configurationParameters.getMailFrom());
             htmlEmail.setSubject(messageSource.getMessage(Constants.MAIL_SUBJECT_MESSAGE,
-                    new Object[]{user.getName()}, locale));
+                    new Object[] { user.getName() }, locale));
 
             String link = url + Constants.PARAMS
                     + Constants.TOKEN_PARAM + Constants.PARAM_VALUE + token + Constants.NEW_PARAM_VALUE
                     + Constants.EMAIL_PARAM + Constants.PARAM_VALUE + email;
 
             htmlEmail.setHtmlMsg(messageSource.getMessage(Constants.MAIL_TEMPLATE_MESSAGE,
-                    new Object[]{user.getName(), link}, locale));
+                    new Object[] { user.getName(), link }, locale));
 
             htmlEmail.setTextMsg(messageSource.getMessage(Constants.MAIL_HTML_NOT_SUPPORTED_MESSAGE,
                     new Object[0], locale));
@@ -135,12 +136,13 @@ public class UserService {
                     Constants.DUPLICATED_INSTANCE_MESSAGE);
         }
 
-        //PARA EVITAR USAR UN SALT ESTATICO
-        String contrasenaHasheada = BCrypt.hashpw(password,BCrypt.gensalt());
+        // PARA EVITAR USAR UN SALT ESTATICO
+        String contrasenaHasheada = BCrypt.hashpw(password, BCrypt.gensalt());
         User user = userRepository.create(new User(name, email, contrasenaHasheada, address, image));
 
         // COMENTADA PARA EVITAR EL USO DE SALT ESTATICO
-        //User user = userRepository.create(new User(name, email, BCrypt.hashpw(password, SALT), address, image));
+        // User user = userRepository.create(new User(name, email,
+        // BCrypt.hashpw(password, SALT), address, image));
         saveProfileImage(user.getUserId(), image, imageContents);
         return user;
     }
@@ -179,16 +181,17 @@ public class UserService {
         }
         // PARA EVITAR USAR EL SALT ESTATICO
         if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
-        //COMENTADO PARA EVITAR EL USO DE SALT ESTATICO
-        //if (userRepository.findByEmailAndPassword(user.getEmail(), BCrypt.hashpw(oldPassword, SALT)) == null) {
+            // COMENTADO PARA EVITAR EL USO DE SALT ESTATICO
+            // if (userRepository.findByEmailAndPassword(user.getEmail(),
+            // BCrypt.hashpw(oldPassword, SALT)) == null) {
             throw exceptionGenerationUtils.toAuthenticationException(Constants.AUTH_INVALID_PASSWORD_MESSAGE,
                     id.toString());
         }
         // PARA EVITAR USAR EL SALT ESTATICO
         user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
-        
+
         // COMENTADO PARA EVITAR EL USO DE SALT ESTATICO
-        //user.setPassword(BCrypt.hashpw(password, SALT));
+        // user.setPassword(BCrypt.hashpw(password, SALT));
         return userRepository.update(user);
     }
 
@@ -205,7 +208,7 @@ public class UserService {
         user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
 
         // COMENTADO PARA EVITAR EL USO DE SALT ESTATICO
-        //user.setPassword(BCrypt.hashpw(password, SALT));
+        // user.setPassword(BCrypt.hashpw(password, SALT));
         user.setResetPasswordToken(null);
         return userRepository.update(user);
     }

@@ -144,7 +144,9 @@
                                      th:errorclass="error"
                                      data-validation-error-msg-container="#input-image-error"
                                      th:attr="data-validation-error-msg=#{profile.input.image.validation}"
-                                     aria-describedby="imageHelp">
+                                     aria-describedby="imageHelp"
+                                     accept="image/*">
+                                    
                            </div>
                            <div class="d-none d-sm-block col-sm-3">
                               <small id="imageHelp" class="form-text text-muted text-left"

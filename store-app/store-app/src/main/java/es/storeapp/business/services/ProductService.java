@@ -39,7 +39,7 @@ public class ProductService {
 
     @Autowired
     ExceptionGenerationUtils exceptionGenerationUtils;
-    
+
     @Transactional(readOnly = true)
     public List<Product> findAllProducts() {
         return productRepository.findAll(Constants.PRICE_FIELD);
@@ -74,9 +74,9 @@ public class ProductService {
             throws InstanceNotFoundException {
         try {
             Product product = productRepository.findById(productId);
-            if(logger.isDebugEnabled()) {
-                logger.debug(MessageFormat.format("Searching if the user {0} has commented the product {1}", 
-                    user.getEmail(), product.getName()));
+            if (logger.isDebugEnabled()) {
+                logger.debug(MessageFormat.format("Searching if the user {0} has commented the product {1}",
+                        user.getEmail(), product.getName()));
             }
             return rateRepository.findByUserAndProduct(user.getUserId(), productId);
         } catch (EmptyResultDataAccessException e) {
@@ -90,20 +90,24 @@ public class ProductService {
         Product product = productRepository.findById(productId);
         try {
             Comment comment = rateRepository.findByUserAndProduct(user.getUserId(), product.getProductId());
-            if(logger.isDebugEnabled()) {
-                logger.debug(MessageFormat.format("{0} has modified his comment of the product {1}", 
-                    user.getName(), product.getName()));
+            if (logger.isDebugEnabled()) {
+                logger.debug(MessageFormat.format("{0} has modified his comment of the product {1}",
+                        user.getName(), product.getName()));
             }
             product.setTotalScore(product.getTotalScore() - comment.getRating() + rating);
             comment.setRating(rating);
-            comment.setText(text);
+            /* vulnerabilidad - xss */
+            String sanitizedText = text.replaceAll("<[^>]*>", "");// Elimina las etiquetas html
+            sanitizedText = sanitizedText.replaceAll("[^\\x00- \\x7F]", "");// Elimina caracteres no ASCII
+            comment.setText(sanitizedText);
+
             comment.setTimestamp(System.currentTimeMillis());
             productRepository.update(product);
             return rateRepository.update(comment);
         } catch (EmptyResultDataAccessException e) {
-            if(logger.isDebugEnabled()) {
-                logger.debug(MessageFormat.format("{0} created a comment of the product {1}", 
-                    user.getName(), product.getName()));
+            if (logger.isDebugEnabled()) {
+                logger.debug(MessageFormat.format("{0} created a comment of the product {1}",
+                        user.getName(), product.getName()));
             }
             Comment comment = new Comment();
             comment.setUser(user);

@@ -12,11 +12,8 @@ public class CSPInterceptor implements HandlerInterceptor {
         response.setHeader("Content-Security-Policy",
                 "default-src * 'self'; " +
                         "img-src * 'self' data:; " +
-                        "script-src 'self' 'unsafe-inline'; " +
-                        "style-src   * 'self' 'unsafe-inline';" +
-                        "base-uri 'none';" +
-                        "object-src 'none';" +
-                        "required-trusted-types-for 'script';");
+                        "script-src  * 'self' 'unsafe-eval' 'unsafe-inline'; " +
+                        "style-src   * 'self' 'unsafe-inline';");
         return true;
     }
 

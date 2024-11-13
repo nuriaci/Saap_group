@@ -3,6 +3,7 @@ package es.storeapp.web.controller;
 import es.storeapp.business.entities.User;
 import es.storeapp.business.exceptions.AuthenticationException;
 import es.storeapp.business.exceptions.DuplicatedResourceException;
+import es.storeapp.business.exceptions.InputValidationException;
 import es.storeapp.business.exceptions.InstanceNotFoundException;
 import es.storeapp.business.exceptions.ServiceException;
 import es.storeapp.business.services.UserService;
@@ -44,6 +45,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -136,7 +138,11 @@ public class UserController {
         }
         User user;
         try {
-            user = userService.login(loginForm.getEmail(), loginForm.getPassword());
+            /* vulnerabilidad - xss */
+            // Elimina las etiquetas html
+            String sanitizedText = loginForm.getEmail().replaceAll("<[^>]*>", "");
+            user = userService.login(sanitizedText, loginForm.getPassword());
+
             session.setAttribute(Constants.USER_SESSION, user);
             if (logger.isDebugEnabled()) {
                 logger.debug(MessageFormat.format("User {0} logged in", user.getEmail()));
@@ -180,10 +186,22 @@ public class UserController {
         }
         User user;
         try {
+            /* vulnerabilidad -Validación de datos de entrada */
+            MultipartFile imagen;
+            String imageType = userProfileForm.getImage().getContentType() != null
+                    ? userProfileForm.getImage().getContentType()
+                    : null;
+            assert imageType != null;
+            if (imageType.equals("image/jpg") || imageType.equals("image/png") || imageType.equals("image/jpeg")) {
+                imagen = userProfileForm.getImage() != null ? userProfileForm.getImage() : null;
+            } else {
+                throw new InputValidationException("La imagen debe ser PNG, JPG, JPEG o GIF.");
+            }
+
             user = userService.create(userProfileForm.getName(), userProfileForm.getEmail(),
                     userProfileForm.getPassword(), userProfileForm.getAddress(),
-                    userProfileForm.getImage() != null ? userProfileForm.getImage().getOriginalFilename() : null,
-                    userProfileForm.getImage() != null ? userProfileForm.getImage().getBytes() : null);
+                    imagen != null ? imagen.getOriginalFilename() : null,
+                    imagen != null ? imagen.getBytes() : null);
             if (logger.isDebugEnabled()) {
                 logger.debug(
                         MessageFormat.format("User {0} with name {1} registered", user.getEmail(), user.getName()));
@@ -214,10 +232,22 @@ public class UserController {
         }
         User updatedUser;
         try {
+            /* vulnerabilidad -Validación de datos de entrada */
+            MultipartFile imagen;
+            String imageType = userProfileForm.getImage().getContentType() != null
+                    ? userProfileForm.getImage().getContentType()
+                    : null;
+            assert imageType != null;
+            if (imageType.equals("image/jpg") || imageType.equals("image/png") || imageType.equals("image/jpeg")) {
+                imagen = userProfileForm.getImage() != null ? userProfileForm.getImage() : null;
+            } else {
+                throw new InputValidationException("La imagen debe ser PNG, JPG, JPEG o GIF.");
+            }
+
             updatedUser = userService.update(user.getUserId(), userProfileForm.getName(), userProfileForm.getEmail(),
                     userProfileForm.getAddress(),
-                    userProfileForm.getImage() != null ? userProfileForm.getImage().getOriginalFilename() : null,
-                    userProfileForm.getImage() != null ? userProfileForm.getImage().getBytes() : null);
+                    imagen != null ? imagen.getOriginalFilename() : null,
+                    imagen != null ? imagen.getBytes() : null);
 
             if (logger.isDebugEnabled()) {
                 logger.debug(MessageFormat.format("User {0} with name {1} updated",
