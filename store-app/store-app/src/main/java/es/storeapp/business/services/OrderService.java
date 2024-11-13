@@ -26,24 +26,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private OrderLineRepository orderLineRepository;
-    
+
     @Autowired
     private ProductRepository productRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     ExceptionGenerationUtils exceptionGenerationUtils;
-    
+
+    /* vulnerabilidad - Vulnerabilidad en la validación de datos */
     @Transactional()
-    public Order create(User user, String name, String address, Integer price, List<Long> products) 
+    public Order create(User user, String name, String address, Integer price, List<Long> products)
             throws InstanceNotFoundException {
         Order order = new Order();
         order.setName(name);
@@ -52,32 +53,45 @@ public class OrderService {
         order.setPrice(price);
         order.setState(OrderState.PENDING);
         order.setTimestamp(System.currentTimeMillis());
+
+        int totalPrice = 0;
         orderRepository.create(order);
+
+        if (order.getPrice() == null) {
+            throw new IllegalArgumentException("Price cannot be null");
+        }
         for (Long productId : products) {
             Product product = productRepository.findById(productId);
+
             product.setSales(product.getSales() + 1);
+
             OrderLine orderLine = new OrderLine();
             orderLine.setPrice(product.getPrice());
             orderLine.setProduct(product);
-            orderLine.setOrder(order);  
+            orderLine.setOrder(order);
             orderLineRepository.create(orderLine);
+
+            totalPrice += product.getPrice();
         }
+
+        order.setPrice(totalPrice);
+        orderRepository.create(order);
         return orderRepository.findById(order.getOrderId());
     }
-    
+
     @Transactional()
-    public Order pay(User user, Long orderId, String creditCart, Integer cvv, 
-                     Integer expirationMonth, Integer expirationYear, Boolean setAsDefault) 
-        throws InstanceNotFoundException, InvalidStateException {
+    public Order pay(User user, Long orderId, String creditCart, Integer cvv,
+            Integer expirationMonth, Integer expirationYear, Boolean setAsDefault)
+            throws InstanceNotFoundException, InvalidStateException {
         Order order = orderRepository.findById(orderId);
-        if(order.getState() != OrderState.PENDING) {
-            if(logger.isWarnEnabled()) {
+        if (order.getState() != OrderState.PENDING) {
+            if (logger.isWarnEnabled()) {
                 logger.warn(MessageFormat.format("Trying to pay the order {0}", order));
             }
             throw exceptionGenerationUtils.toInvalidStateException(Constants.INVALID_STATE_EXCEPTION_MESSAGE);
         }
         order.setState(OrderState.COMPLETED);
-        if(setAsDefault != null && setAsDefault) {
+        if (setAsDefault != null && setAsDefault) {
             CreditCard card = new CreditCard();
             card.setCard(creditCart);
             card.setCvv(cvv);
@@ -88,22 +102,22 @@ public class OrderService {
         }
         return orderRepository.update(order);
     }
-    
+
     @Transactional()
-    public Order cancel(User user, Long orderId) 
-        throws InstanceNotFoundException, InvalidStateException {
+    public Order cancel(User user, Long orderId)
+            throws InstanceNotFoundException, InvalidStateException {
         Order order = orderRepository.findById(orderId);
-        if(order.getState() != OrderState.PENDING) {
+        if (order.getState() != OrderState.PENDING) {
             throw exceptionGenerationUtils.toInvalidStateException(Constants.INVALID_STATE_EXCEPTION_MESSAGE);
         }
         order.setState(OrderState.CANCELLED);
         return orderRepository.update(order);
     }
-    
+
     @Transactional(readOnly = true)
     public List<Order> findByUserById(Long userId) throws InstanceNotFoundException {
         User user = userRepository.findById(userId);
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug(MessageFormat.format("Searching the orders of the user {0}", user.getEmail()));
         }
         return orderRepository.findByUserId(userId);
@@ -117,11 +131,11 @@ public class OrderService {
     @Transactional(readOnly = true)
     public boolean findIfUserBuyProduct(Long userId, Long productId) throws InstanceNotFoundException {
         User user = userRepository.findById(userId);
-        if(logger.isDebugEnabled()) {
-            logger.debug(MessageFormat.format("Checking if user {0} buy the product {1}", 
-                user.getEmail(), productId));
+        if (logger.isDebugEnabled()) {
+            logger.debug(MessageFormat.format("Checking if user {0} buy the product {1}",
+                    user.getEmail(), productId));
         }
         return orderLineRepository.findIfUserBuyProduct(userId, productId);
     }
-    
+
 }
