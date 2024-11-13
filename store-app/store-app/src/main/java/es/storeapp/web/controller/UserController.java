@@ -192,7 +192,8 @@ public class UserController {
                     ? userProfileForm.getImage().getContentType()
                     : null;
             assert imageType != null;
-            if (imageType.equals("image/jpg") || imageType.equals("image/png") || imageType.equals("image/jpeg")) {
+            if (imageType.equals("image/jpg") || imageType.equals("image/png") || imageType.equals("image/jpeg")
+                    || imageType.equals("image/gif")) {
                 imagen = userProfileForm.getImage() != null ? userProfileForm.getImage() : null;
             } else {
                 throw new InputValidationException("La imagen debe ser PNG, JPG, JPEG o GIF.");
@@ -238,7 +239,8 @@ public class UserController {
                     ? userProfileForm.getImage().getContentType()
                     : null;
             assert imageType != null;
-            if (imageType.equals("image/jpg") || imageType.equals("image/png") || imageType.equals("image/jpeg")) {
+            if (imageType.equals("image/jpg") || imageType.equals("image/png") || imageType.equals("image/jpeg")
+                    || imageType.equals("image/gif")) {
                 imagen = userProfileForm.getImage() != null ? userProfileForm.getImage() : null;
             } else {
                 throw new InputValidationException("La imagen debe ser PNG, JPG, JPEG o GIF.");
